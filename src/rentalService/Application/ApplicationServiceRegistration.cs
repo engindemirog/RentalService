@@ -15,6 +15,11 @@ using NArchitecture.Core.ElasticSearch.Models;
 using NArchitecture.Core.Localization.Resource.Yaml.DependencyInjection;
 using NArchitecture.Core.Mailing;
 using NArchitecture.Core.Mailing.MailKit;
+using Application.Services.AdditionalServices;
+using Application.Services.Rentals;
+using Application.Services.RentalBranches;
+using Application.Services.RentalsAdditionalServices;
+using MassTransit;
 
 namespace Application;
 
@@ -47,10 +52,22 @@ public static class ApplicationServiceRegistration
         services.AddSingleton<ILogger, SerilogFileLogger>(_ => new SerilogFileLogger(fileLogConfiguration));
         services.AddSingleton<IElasticSearch, ElasticSearchManager>(_ => new ElasticSearchManager(elasticSearchConfig));
 
+        services.AddMassTransit(x =>
+        {
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.ConfigureEndpoints(context);
+
+            });
+        });
 
         services.AddYamlResourceLocalization();
 
 
+        services.AddScoped<IAdditionalServiceService, AdditionalServiceManager>();
+        services.AddScoped<IRentalService, RentalManager>();
+        services.AddScoped<IRentalBranchService, RentalBranchManager>();
+        services.AddScoped<IRentalsAdditionalServiceService, RentalsAdditionalServiceManager>();
         return services;
     }
 
